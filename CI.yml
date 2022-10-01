@@ -1,0 +1,61 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)
+pool:
+  vmImage: 'ubuntu-20.04'
+
+stages:
+- stage: CI
+
+  jobs:
+  - job: CI
+    steps:
+
+    - bash: echo "##vso[task.prependpath]$CONDA/bin"
+      displayName: Active Conda
+
+    - bash: conda env create -f conda.yml
+      displayName: Conda create environment
+
+    - bash: source activate pycondbx && pip install pytest-azurepipelines && export PYTHONPATH=$PWD && pytest ./tests/ --cov=. --cov-report=xml -v
+      displayName: Python tests
+
+    - bash: source activate pycondbx && coverage report
+      displayName: Show coverage
+
+    - bash: source activate pycondbx && pylint core --rcfile=./core/pylintrc || exit 0
+      displayName: Run pylint
+
+
+- stage: CD
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  variables:
+  - group: Databricks Job deployment
+
+  jobs:
+  - job: CDDEV
+
+    steps:
+    - task: ReplaceTokens@1
+      displayName: 'Replace tokens'
+      inputs:
+        sourcePath: 'pipelines'
+        filePattern: '**\*.json'
+        regexPattern: '__(\w+)__'
+
+    - bash: echo "##vso[task.prependpath]$CONDA/bin"
+      displayName: Active Conda
+
+    - bash: conda env create -f conda.yml
+      displayName: Conda create environment
+
+    - bash: echo "token = $(DATABRICKS_TOKEN)" >> ./.databricks_token
+      displayName: Create databricks config file
+      env:
+        DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+
+    - bash: source activate pycondbx && databricks configure --host "$(DATABRICKS_HOST)" -f ./.databricks_token
+      displayName: Configure databricks
+      env:
+        DATABRICKS_HOST: $(DATABRICKS_HOST)
+
+    - bash: source activate pycondbx && dbx deploy --deployment-file  job_deployment.json
+      displayName: deploy Job - Unificacion del dato

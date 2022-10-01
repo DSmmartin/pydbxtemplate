@@ -1,0 +1,16 @@
+name: pycondbx
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8.10
+  - pyspark=3.2.1
+  - mamba=0.23.0
+  - anaconda::pyodbc=4.0.32
+  - ipython=8.3.0
+  - pip
+  - pip:
+    - pytest==7.1.2
+    - pylint==2.13.9
+    - pytest-cov==3.0.0
+    - databricks-cli==0.16.6
+    - dbx==0.4.1

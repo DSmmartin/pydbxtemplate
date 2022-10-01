@@ -1,0 +1,42 @@
+{
+    "default": {
+        "jobs": [
+            {
+                "name": "pycondbx_demo",
+                "tasks": [
+                    {
+                        "task_key": "pycondbx_demo",
+                        "new_cluster": {
+                            "spark_version": "10.4.x-scala2.12",
+                            "node_type_id": "Standard_D3_v2",
+                            "driver_node_type_id": "Standard_D3_v2",
+                            "num_workers": 2,
+                            "autoscale": {
+                                "min_workers": 2,
+                                "max_workers": 4
+                            },
+                            "spark_env_vars": {
+                                "DATABASEURL": "__DATABASEURL__",
+                                "DATABASENAME": "__DATABASENAME__"
+                            },
+                            "libraries": [
+                                {
+                                    "pypi": {
+                                        "package": "pyodbc==4.0.32"
+                                    }
+                                }
+                            ]
+                        },
+                        "max_retries": 1,
+                        "spark_python_task": {
+                            "python_file": "jobs/JobDemo.py"
+                        }
+
+                    }
+                ],
+                "format": "MULTI_TASK"
+            }
+        ]
+
+        }
+    }
